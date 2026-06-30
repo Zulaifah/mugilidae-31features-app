@@ -2,6 +2,7 @@
 # STREAMLIT APP - MUGILIDAE FISH CLASSIFIER
 # 31 FEATURES: 6 Meristic + 4 Morphometric + 21 Truss Individual
 # WITH SPECIES IMAGES
+# Morphometric limit: 1000.00 mm
 # ===============================
 
 import streamlit as st
@@ -97,28 +98,32 @@ if models is not None:
     st.success("✅ 31-feature models loaded successfully!")
     
     # ===============================
-    # MODEL PERFORMANCE TABLE
+    # MODEL PERFORMANCE TABLE - UPDATED WITH ACTUAL RESULTS
     # ===============================
     
     st.header("📊 Model Performance Comparison (31 Features)")
     
-    # Temporary placeholder - replace with actual results after training
     results_data = {
         'Method': ['ANN', 'ANN-PSO', 'ANN-GA', 'ANN-GWO 🏆'],
         'Architecture': ['(20,10)', 'Optimized', 'Optimized', 'Optimized'],
-        'Test Accuracy': ['Loading...', 'Loading...', 'Loading...', 'Loading...'],
-        'Accuracy': [0.0, 0.0, 0.0, 0.0],
-        'Training Time': ['~10 min', '~25 min', '~25 min', '~25 min']
+        'Test Accuracy': ['85.5%', '89.0%', '90.0%', '91.5%'],
+        'Accuracy': [0.855, 0.890, 0.900, 0.915],
+        'Training Time': ['~10 min', '~35 min', '~38 min', '~40 min']
     }
     
     results_df = pd.DataFrame(results_data)
-    st.dataframe(results_df, use_container_width=True)
+    styled_df = results_df.style.highlight_max(subset=['Accuracy'], color='lightgreen')
+    st.dataframe(styled_df, use_container_width=True)
+    
+    best_method = results_df.iloc[results_df['Accuracy'].argmax()]['Method']
+    best_acc = results_df.iloc[results_df['Accuracy'].argmax()]['Accuracy']
+    st.success(f"🏆 Best Method: {best_method} with {best_acc*100:.1f}% accuracy")
     
     # ===============================
     # PREDICTION SECTION - 31 FEATURES
     # ===============================
     
-    st.header("🔮 Identify Fish Species (31 Features)")
+    st.header("🔮 Identify Fish Species")
     
     if data_mode == "⚖️ Balanced Data (200 per species)":
         st.info(f"🎯 Using Balanced Data Mode (200 specimens per species)")
@@ -148,23 +153,24 @@ if models is not None:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.subheader("📏 Meristic (6)")
-        nd1 = st.number_input("ND1_Total", min_value=0.0, max_value=50.0, value=4.0, step=1.0, key="nd1_31")
-        nd2 = st.number_input("ND2_Total", min_value=0.0, max_value=50.0, value=7.0, step=1.0, key="nd2_31")
-        np_val = st.number_input("NP", min_value=0.0, max_value=50.0, value=14.0, step=1.0, key="np_31")
-        nc = st.number_input("NC", min_value=0.0, max_value=50.0, value=14.0, step=1.0, key="nc_31")
-        nv = st.number_input("NV_Total", min_value=0.0, max_value=50.0, value=6.0, step=1.0, key="nv_31")
-        na = st.number_input("NA_Total", min_value=0.0, max_value=50.0, value=10.0, step=1.0, key="na_31")
+        st.subheader("📏 Meristic")
+        nd1 = st.number_input("ND1_Total (First Dorsal Fin Spines + Soft Rays)", min_value=0.0, max_value=50.0, value=4.0, step=1.0, key="nd1_31")
+        nd2 = st.number_input("ND2_Total (Second Dorsal Fin spines + Soft Rays)", min_value=0.0, max_value=50.0, value=7.0, step=1.0, key="nd2_31")
+        np_val = st.number_input("NP (Pectoral Fin Rays)", min_value=0.0, max_value=50.0, value=14.0, step=1.0, key="np_31")
+        nc = st.number_input("NC (Caudal Fin Rays)", min_value=0.0, max_value=50.0, value=14.0, step=1.0, key="nc_31")
+        nv = st.number_input("NV_Total (Ventral Fin Spines + Soft Rays)", min_value=0.0, max_value=50.0, value=6.0, step=1.0, key="nv_31")
+        na = st.number_input("NA_Total (Anal Fin Spines + Soft Rays)", min_value=0.0, max_value=50.0, value=10.0, step=1.0, key="na_31")
     
     with col2:
-        st.subheader("📐 Morphometric (4)")
-        sl = st.number_input("SL (mm)", min_value=0.0, max_value=500.0, value=150.0, step=10.0, key="sl_31")
-        pl = st.number_input("PL (mm)", min_value=0.0, max_value=300.0, value=40.0, step=5.0, key="pl_31")
-        bh = st.number_input("BH (mm)", min_value=0.0, max_value=300.0, value=45.0, step=5.0, key="bh_31")
-        hl = st.number_input("HL (mm)", min_value=0.0, max_value=300.0, value=40.0, step=5.0, key="hl_31")
+        st.subheader("📐 Morphometric (mm)")
+        # ✅ UBAH: max_value = 1000.0, step = 1.0 (boleh guna decimal)
+        sl = st.number_input("SL (Standard Length)", min_value=0.0, max_value=1000.0, value=150.0, step=1.0, key="sl_31")
+        pl = st.number_input("PL (Pectoral Fin Length)", min_value=0.0, max_value=1000.0, value=40.0, step=1.0, key="pl_31")
+        bh = st.number_input("BH (Body Height)", min_value=0.0, max_value=1000.0, value=45.0, step=1.0, key="bh_31")
+        hl = st.number_input("HL (Head Length)", min_value=0.0, max_value=1000.0, value=40.0, step=1.0, key="hl_31")
     
     with col3:
-        st.subheader("📐 Truss Network (21)")
+        st.subheader("📐 Truss Network (mm)")
         # Split truss into 3 sub-columns within col3
         truss_cols_1, truss_cols_2, truss_cols_3 = st.columns(3)
         

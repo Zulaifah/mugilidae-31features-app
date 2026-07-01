@@ -1,8 +1,7 @@
 # ===============================
 # STREAMLIT APP - MUGILIDAE FISH CLASSIFIER
 # 31 FEATURES: 6 Meristic + 4 Morphometric + 21 Truss Individual
-# WITH SPECIES IMAGES
-# Morphometric limit: 1000.00 mm
+# WITH SPECIES IMAGES & COMPLETE OUTPUT
 # ===============================
 
 import streamlit as st
@@ -34,17 +33,23 @@ data_mode = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 
+# Set accuracy based on mode
+if data_mode == "⚖️ Balanced Data (200 per species)":
+    BEST_ACC = 0.915
+    MODE_LABEL = "Balanced Data (200/species)"
+else:
+    BEST_ACC = 0.780
+    MODE_LABEL = "Real Data Only"
+
 st.sidebar.header("📋 About")
-st.sidebar.info("""
+st.sidebar.info(f"""
 Comparative Study Results (31 Features):
-- 🥇 ANN-GWO: Best accuracy
-- 🥈 ANN: 
-- 🥉 ANN-PSO: 
-- ANN-GA: 
+- 🥇 ANN-GWO: {BEST_ACC*100:.1f}% (Best)
+- 🥈 ANN-GA: {90.0 if data_mode == '⚖️ Balanced Data (200 per species)' else 76.5}%
+- 🥉 ANN-PSO: {89.0 if data_mode == '⚖️ Balanced Data (200 per species)' else 75.0}%
+- ANN: {85.5 if data_mode == '⚖️ Balanced Data (200 per species)' else 72.5}%
 
 31 Features: Meristic (6), Morphometric (4), Truss (21)
-
-Best Architecture: ANN-GWO (optimized)
 """)
 
 st.sidebar.markdown("---")
@@ -134,12 +139,12 @@ if models is not None:
     # PREDICTION SECTION - 31 FEATURES
     # ===============================
     
-    st.header("🔮 Identify Fish Species")
+    st.header("🔮 Identify Fish Species (31 Features)")
     
     if data_mode == "⚖️ Balanced Data (200 per species)":
-        st.info(f"🎯 Using Balanced Data Mode (200 specimens per species)")
+        st.info(f"🎯 Using Balanced Data Mode (200 specimens per species) - Best accuracy: {best_acc*100:.1f}%")
     else:
-        st.info(f"🎯 Using Real Data Only Mode")
+        st.info(f"🎯 Using Real Data Only Mode - Best accuracy: {best_acc*100:.1f}%")
     
     # Model selection
     model_choice = st.selectbox(
@@ -438,9 +443,10 @@ else:
 # ===============================
 
 st.markdown("---")
-st.markdown("""
+st.markdown(f"""
 <div style='text-align: center; color: gray;'>
 <p>🐟 Mugilidae Fish Classification System | 31 Features (6 Meristic + 4 Morphometric + 21 Truss)</p>
-<p>🏆 Best Model: ANN-GWO (91.5% accuracy) | FYP Project | Universiti Malaysia Terengganu</p>
+<p>🏆 Best Model: ANN-GWO ({best_acc*100:.1f}% accuracy) | Active Mode: {data_mode}</p>
+<p>FYP Project | Universiti Malaysia Terengganu</p>
 </div>
 """, unsafe_allow_html=True)

@@ -244,13 +244,13 @@ if models is not None:
             confidence = np.max(probabilities) * 100
             
             # ===============================
-            # DISPLAY RESULTS WITH IMAGE
+            # DISPLAY RESULTS WITH IMAGE & COMPLETE METRICS
             # ===============================
             
             st.markdown("---")
             st.markdown("### 🎯 Prediction Results")
             
-            # Create columns for image and info
+            # --- Row 1: Image + Species Name + Confidence ---
             col_img, col_info = st.columns([1, 2])
             
             with col_img:
@@ -261,7 +261,6 @@ if models is not None:
                         img = Image.open(image_path)
                         st.image(img, caption=predicted_species, use_container_width=True)
                     else:
-                        # Fallback: try other extensions
                         alt_paths = [
                             f"images/{predicted_species.lower().replace(' ', '_')}.png",
                             f"images/{predicted_species.lower().replace(' ', '_')}.jpeg"
@@ -281,36 +280,103 @@ if models is not None:
                     st.caption(f"Image not available")
             
             with col_info:
+                # Species name with large font
                 st.markdown(f"""
                 <div style="padding: 20px; background-color: #f0f8ff; border-radius: 10px; border: 2px solid #1e90ff;">
-                    <h2 style="color: #1e90ff;">🐟 {predicted_species}</h2>
-                    <p><b>Confidence:</b> {confidence:.1f}%</p>
+                    <h1 style="color: #1e90ff; margin-bottom: 5px;">🐟 {predicted_species}</h1>
+                    <hr style="margin: 10px 0;">
+                    <p><b>Confidence:</b> <span style="font-size: 20px; color: #1e90ff;">{confidence:.1f}%</span></p>
                     <p><b>Model:</b> {model_name}</p>
+                    <p><b>Model Accuracy:</b> {best_acc*100:.1f}%</p>
                     <p><b>Data Mode:</b> {data_mode}</p>
                     <p><b>Features:</b> 31 (6 Meristic + 4 Morphometric + 21 Truss)</p>
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Progress bar for confidence
+            # --- Row 2: Confidence Progress Bar ---
             st.progress(int(confidence))
+            st.caption(f"Confidence Level: {confidence:.1f}%")
             
-            # ===============================
-            # PROBABILITY DISTRIBUTION
-            # ===============================
+            # --- Row 3: Species Probabilities (Bar Chart + Table) ---
+            st.markdown("---")
+            st.markdown("### 📊 Species Probabilities")
             
-            st.subheader("📊 Species Probabilities")
-            
+            # Create dataframe for probabilities
             prob_df = pd.DataFrame({
                 'Species': label_encoder.classes_,
                 'Probability (%)': probabilities * 100
             }).sort_values('Probability (%)', ascending=False)
             
-            st.bar_chart(prob_df.set_index('Species'))
+            # Reset index for display
+            prob_df_display = prob_df.copy()
+            prob_df_display['Probability (%)'] = prob_df_display['Probability (%)'].round(2)
             
-            # ===============================
-            # TRUSS DETAILS (21 measurements)
-            # ===============================
+            # Create two columns: Bar Chart (left) and Table (right)
+            col_chart, col_table = st.columns([3, 2])
             
+            with col_chart:
+                # Bar chart using st.bar_chart
+                st.bar_chart(
+                    prob_df.set_index('Species'),
+                    use_container_width=True,
+                    height=300
+                )
+                st.caption("📌 Higher bar = Higher probability")
+            
+            with col_table:
+                # Table with color gradient
+                st.dataframe(
+                    prob_df_display.style.background_gradient(
+                        subset=['Probability (%)'], 
+                        cmap='Blues', 
+                        vmin=0, 
+                        vmax=100
+                    ).format({'Probability (%)': '{:.2f}%'}),
+                    use_container_width=True,
+                    height=300
+                )
+            
+            # --- Row 4: Top 3 Most Likely Species ---
+            st.markdown("---")
+            st.markdown("### 🏆 Top 3 Most Likely Species")
+            
+            top3 = prob_df.head(3)
+            
+            col1, col2, col3 = st.columns(3)
+            colors = ['#1e90ff', '#4da6ff', '#80bfff']
+            
+            for idx, (col, (_, row)) in enumerate(zip([col1, col2, col3], top3.iterrows())):
+                with col:
+                    st.markdown(f"""
+                    <div style="text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 10px; border: 2px solid {colors[idx]};">
+                        <h3 style="color: {colors[idx]};">#{idx+1}</h3>
+                        <h4>🐟 {row['Species']}</h4>
+                        <p style="font-size: 24px; font-weight: bold; color: {colors[idx]};">{row['Probability (%)']:.1f}%</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # --- Row 5: Summary Statistics ---
+            with st.expander("📊 Summary Statistics"):
+                st.write(f"**Total Species Classes:** {len(label_encoder.classes_)}")
+                st.write(f"**Predicted Species:** {predicted_species}")
+                st.write(f"**Confidence:** {confidence:.2f}%")
+                st.write(f"**Model Used:** {model_name}")
+                st.write(f"**Data Mode:** {data_mode}")
+                st.write(f"**Number of Features:** 31")
+                
+                # Show all probabilities in a compact table
+                st.write("**All Species Probabilities:**")
+                st.dataframe(
+                    prob_df_display.style.background_gradient(
+                        subset=['Probability (%)'], 
+                        cmap='Blues', 
+                        vmin=0, 
+                        vmax=100
+                    ).format({'Probability (%)': '{:.2f}%'}),
+                    use_container_width=True
+                )
+            
+            # --- Row 6: Truss Details (21 measurements) ---
             with st.expander("📐 Truss Network Details (21 measurements)"):
                 truss_data = {
                     'Measurement': ['A-B', 'A-C', 'A-D', 'B-C', 'B-D', 'C-D', 
@@ -323,10 +389,7 @@ if models is not None:
                 truss_df = pd.DataFrame(truss_data)
                 st.dataframe(truss_df, use_container_width=True)
             
-            # ===============================
-            # DEBUG INFO
-            # ===============================
-            
+            # --- Row 7: Debug Info ---
             with st.expander("🔍 Debug Information"):
                 st.write("**Input Features (31 values):**", input_values)
                 st.write("**Input Shape:**", input_array.shape)
@@ -367,6 +430,6 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: gray;'>
 <p>🐟 Mugilidae Fish Classification System | 31 Features (6 Meristic + 4 Morphometric + 21 Truss)</p>
-<p>FYP Project | Universiti Malaysia Terengganu</p>
+<p>🏆 Best Model: ANN-GWO (91.5% accuracy) | FYP Project | Universiti Malaysia Terengganu</p>
 </div>
 """, unsafe_allow_html=True)

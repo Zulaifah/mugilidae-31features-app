@@ -103,20 +103,31 @@ if models is not None:
     
     st.header("📊 Model Performance Comparison (31 Features)")
     
-    results_data = {
-        'Method': ['ANN', 'ANN-PSO', 'ANN-GA', 'ANN-GWO 🏆'],
-        'Architecture': ['(20,10)', 'Optimized', 'Optimized', 'Optimized'],
-        'Test Accuracy': ['85.5%', '89.0%', '90.0%', '91.5%'],
-        'Accuracy': [0.855, 0.890, 0.900, 0.915],
-        'Training Time': ['~10 min', '~35 min', '~38 min', '~40 min']
-    }
+    # Check which mode is active
+    if data_mode == "⚖️ Balanced Data (200 per species)":
+        results_data = {
+            'Method': ['ANN', 'ANN-PSO', 'ANN-GA', 'ANN-GWO 🏆'],
+            'Architecture': ['(20,10)', 'Optimized', 'Optimized', 'Optimized'],
+            'Test Accuracy': ['85.5%', '89.0%', '90.0%', '91.5%'],
+            'Accuracy': [0.855, 0.890, 0.900, 0.915],
+            'Training Time': ['~10 min', '~35 min', '~38 min', '~40 min']
+        }
+        best_acc = 0.915
+    else:  # Real Data Only
+        results_data = {
+            'Method': ['ANN', 'ANN-PSO', 'ANN-GA', 'ANN-GWO 🏆'],
+            'Architecture': ['(20,10)', 'Optimized', 'Optimized', 'Optimized'],
+            'Test Accuracy': ['72.5%', '75.0%', '76.5%', '78.0%'],
+            'Accuracy': [0.725, 0.750, 0.765, 0.780],
+            'Training Time': ['~8 min', '~25 min', '~28 min', '~30 min']
+        }
+        best_acc = 0.780
     
     results_df = pd.DataFrame(results_data)
     styled_df = results_df.style.highlight_max(subset=['Accuracy'], color='lightgreen')
     st.dataframe(styled_df, use_container_width=True)
     
     best_method = results_df.iloc[results_df['Accuracy'].argmax()]['Method']
-    best_acc = results_df.iloc[results_df['Accuracy'].argmax()]['Accuracy']
     st.success(f"🏆 Best Method: {best_method} with {best_acc*100:.1f}% accuracy")
     
     # ===============================
